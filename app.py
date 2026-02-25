@@ -3,6 +3,9 @@ import pandas as pd
 import google.generativeai as genai
 import os 
 from monday_api import * # if you are using monday_api.py
+from dotenv import load_dotenv
+
+load_dotenv()
 
 st.set_page_config(page_title="Monday BI Dashboard", layout="wide")
 
@@ -110,44 +113,54 @@ if st.button("Analyze Business Data"):
             )
 
     st.subheader("📊 Deals Data Preview")
+    if 'deals_df' in locals():
+     st.subheader("📊 Deals Data Preview")
     st.dataframe(deals_df)
-    # Basic Visualizations (Leadership Updates Requirement)
-st.subheader("📈 Business Visualizations")
+else:
+    st.warning("Deals data not loaded yet.")
+    # 📊 Business Visualizations (Leadership Updates Requirement)
+st.subheader("📊 Business Visualizations")
 
-try:
-    if not deals_df.empty:
+# 🛡️ SAFETY CHECK (VERY IMPORTANT)
+if 'deals_df' in locals() and 'work_df' in locals():
+
+    try:
         # Deals by Stage Chart
-        if "Deal Stage" in deals_df.columns:
+        if not deals_df.empty and "Deal Stage" in deals_df.columns:
             st.write("### Deals by Stage")
             stage_counts = deals_df["Deal Stage"].value_counts()
             st.bar_chart(stage_counts)
 
-    if not work_df.empty:
-        # Work Orders Status Chart
-        if "Status" in work_df.columns:
+        # Work Orders by Status Chart
+        if not work_df.empty and "Status" in work_df.columns:
             st.write("### Work Orders by Status")
             status_counts = work_df["Status"].value_counts()
             st.bar_chart(status_counts)
 
-except Exception as e:
-    st.warning("Visualization error due to messy data formats.")
+    except Exception as e:
+        st.warning("Visualization error due to messy data formats.")
 
-    st.subheader("🛠️ Work Orders Data Preview")
-    st.dataframe(work_df)
+else:
+    st.warning("Please click 'Analyze Business Data' first to load data.")
     # Display the dataframe in Streamlit UI
-if 'df' in locals():
-    st.subheader("Board Data Preview")
-    st.dataframe(df)
+if 'deals_df' in locals():
+    st.subheader("Deals Data Preview")
+    st.dataframe(deals_df)
+elif 'work_df' in locals():
+    st.subheader("Work Orders Data Preview")
+    st.dataframe(work_df)
 else:
     st.warning("No data loaded yet.")
-    # 🧠 AI Insights Section
+   # 🧠 AI Insights Section
 st.subheader("🧠 AI Business Insights")
 
 if 'deals_df' in locals() and 'work_df' in locals():
-    # AI Insights Section
- st.subheader("🧠 AI Business Insights")
 
-if 'deals_df' in locals() and 'work_df' in locals():
+    # 🔎 Clarification logic (ADD HERE)
+    if user_question and "sector" in user_question.lower():
+        if "Sector service" not in deals_df.columns:
+            st.info("Sector data may be incomplete. Insights are based on available records.")
+
     if user_question:
         with st.spinner("Generating AI insights from your business data..."):
             ai_result = generate_ai_insights(deals_df, work_df, user_question)
@@ -158,4 +171,3 @@ if 'deals_df' in locals() and 'work_df' in locals():
 else:
     st.warning("Please click 'Analyze Business Data' first to load data.")
 
-    
